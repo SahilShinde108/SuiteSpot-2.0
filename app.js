@@ -26,7 +26,7 @@ const billingRouter = require("./routes/billing.js");
 const dbUrl = process.env.ATLASDB_URL;
 console.log("ATLASDB_URL defined:", !!dbUrl);
 if (!dbUrl) {
-    console.error("ATLASDB_URL is missing!");
+  console.error("ATLASDB_URL is missing!");
 }
 
 main()
@@ -106,7 +106,7 @@ cron.schedule('0 * * * *', async () => { // Runs every hour
   const twentyFourHoursAgo = new Date(Date.now() - (24 * 60 * 60 * 1000));
   try {
     const result = await Booking.updateMany(
-      { 
+      {
         status: 'pending',
         createdAt: { $lt: twentyFourHoursAgo } // Mongoose syntax
       },

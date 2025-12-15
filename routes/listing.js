@@ -27,6 +27,9 @@ router.get("/new", isLoggedIn, isOwner, listingController.renderNewForm);
 // NOTE: This route must come BEFORE the "/:id" route to work correctly
 router.get("/my-listings", isLoggedIn, isOwner, wrapAsync(listingController.showMyListings));
 
+// New route for admin dashboard
+router.get("/admin/dashboard", isLoggedIn, isAdmin, wrapAsync(listingController.adminDashboard));
+
 // Route for booking a specific listing
 router.post("/:id/book", isLoggedIn, isCustomerRole, wrapAsync(bookingController.createBooking));
 
@@ -45,9 +48,6 @@ router
 
 // New route for admin to update listing status
 router.patch("/:id/status", isLoggedIn, isAdmin, wrapAsync(listingController.updateListingStatus));
-
-// New route for admin dashboard
-router.get("/admin/dashboard", isLoggedIn, isAdmin, wrapAsync(listingController.adminDashboard));
 
 // Route to show the "edit listing" form
 router.get("/:id/edit", isLoggedIn, isOwner, wrapAsync(listingController.renderEditForm));

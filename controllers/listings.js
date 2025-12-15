@@ -79,7 +79,7 @@ module.exports = {
 
         const cities = [...new Set((await Listing.find({}, 'location')).map(l => l.location.split(',')[0].trim()))];
         const festivals = [...new Set((await Listing.find({}, 'festivalName')).map(l => l.festivalName).filter(name => name && name.trim() !== ''))];
-        
+
         const nearestLocations = [...new Set(
             (await Listing.find({}, 'nearestLocation1 nearestLocation2 nearestLocation3 nearestLocation4'))
                 .flatMap(l => [l.nearestLocation1, l.nearestLocation2, l.nearestLocation3, l.nearestLocation4])
@@ -94,37 +94,7 @@ module.exports = {
         res.render("listings/new.ejs");
     },
 
-    showListing: async (req, res) => {
-        let { id } = req.params;
-        const listing = await Listing.findById(id)
-            .populate({
-                path: "reviews",
-                populate: {
-                    path: "author",
-                },
-            })
-            .populate("owner");
-
-        if (!listing) {
-            req.flash("error", "Listing you requested does not exist!");
-            return res.redirect("/listings");
-        }
-
-        if (req.user && req.user.role !== 'admin' && listing.status !== 'approved') {
-            req.flash("error", "You can only view approved listings.");
-            return res.redirect("/listings");
-        }
-
-        const currentBooking = await Booking.findOne({
-            listing: id,
-            status: 'confirmed',
-            endDate: { $gte: new Date() }
-        }).populate('guest');
-        
-        res.render("listings/show.ejs", { listing, currentBooking });
-    },
-
-    createListing: async (req, res, next) => {
+    createListing: async (req, res) => {
         let response = await geoCodingClient.forwardGeocode({
             query: req.body.listing.location,
             limit: 1,
@@ -137,6 +107,33 @@ module.exports = {
         await newListing.save();
         req.flash("success", "New Listing Created!");
         res.redirect(`/listings/${newListing._id}`);
+    },
+
+    showListing: async (req, res) => {
+        let { id } = req.params;
+        const listing = await Listing.findById(id)
+            .populate({
+                path: "reviews",
+                populate: {
+                    path: "author",
+                },
+            })
+            .populate("owner");
+        if (!listing) {
+            req.flash("error", "Listing you requested for does not exist!");
+            return res.redirect("/listings");
+        }
+
+        // Fetch current booking for this listing (if any)
+        const currentBooking = await Booking.findOne({
+            listing: id,
+            status: 'confirmed',
+            endDate: { $gte: new Date() } // Only consider bookings that haven't ended yet
+        })
+            .populate('guest')
+            .sort({ startDate: 1 }); // Get the earliest current booking
+
+        res.render("listings/show.ejs", { listing, currentBooking });
     },
 
     renderEditForm: async (req, res) => {
@@ -161,7 +158,7 @@ module.exports = {
             listing.image = url;
             await listing.save();
         }
-        
+
         req.flash("success", "Listing Updated!");
         res.redirect(`/listings/${id}`);
     },
@@ -189,7 +186,7 @@ module.exports = {
 
     adminDashboard: async (req, res) => {
         const { searchOwner, searchCustomer, tab } = req.query;
-        
+
         // Fetch all users and populate related data manually or via separate queries if needed.
         // Mongoose 'virtuals' could be used for reverse relationships, but here we might just query separately or use aggregation.
         // For simplicity and matching previous logic, let's fetch users and then populate/filter.
@@ -197,11 +194,11 @@ module.exports = {
         // Let's fetch lists separately to pass to the view.
 
         let allUsers = await User.find({});
-        
+
         // To get listings, bookings, bills, reviews for each user, it's better to query those collections.
         // But the view likely expects `user.Listings`, `user.Bookings` etc.
         // We can attach them manually.
-        
+
         for (let user of allUsers) {
             user.Listings = await Listing.find({ owner: user._id });
             user.Bookings = await Booking.find({ guest: user._id }).populate('listing').populate('guest');
@@ -214,10 +211,10 @@ module.exports = {
         }
 
         let allBookings = await Booking.find({}).populate('listing').populate('guest');
-    
+
         let filteredOwners = allUsers.filter(user => user.role === 'owner');
         let filteredCustomers = allUsers.filter(user => user.role === 'customer');
-    
+
         if (searchOwner && searchOwner.trim() !== '') {
             const searchTerm = searchOwner.toLowerCase();
             filteredOwners = filteredOwners.filter(owner =>
@@ -227,7 +224,7 @@ module.exports = {
         } else if (searchOwner === '') {
             filteredOwners = [];
         }
-    
+
         if (searchCustomer && searchCustomer.trim() !== '') {
             const searchTerm = searchCustomer.toLowerCase();
             filteredCustomers = filteredCustomers.filter(customer =>
@@ -237,11 +234,11 @@ module.exports = {
         } else if (searchCustomer === '') {
             filteredCustomers = [];
         }
-    
+
         const pendingListings = await Listing.find({ status: 'pending' });
         const approvedListings = await Listing.find({ status: 'approved' });
         const rejectedListings = await Listing.find({ status: 'rejected' });
-    
+
         if (req.xhr || req.headers.accept.indexOf('json') > -1) {
             if (tab === 'owners') {
                 return res.json({ filteredOwners });
@@ -249,7 +246,7 @@ module.exports = {
                 return res.json({ filteredCustomers });
             }
         }
-    
+
         res.render("listings/admin-dashboard.ejs", {
             pendingListings,
             approvedListings,

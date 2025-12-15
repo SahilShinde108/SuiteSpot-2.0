@@ -114,13 +114,6 @@ module.exports = {
         // Find all listings owned by the current user
         const ownerListings = await Listing.find({ owner: ownerId }, '_id');
         const listingIds = ownerListings.map(listing => listing._id);
-
-        // Find all bookings for those listings
-        // Note: Bill is not directly related to Booking in Mongoose schema via 'include' like Sequelize.
-        // We might need to fetch bills separately or populate if we added a reference.
-        // The Bill model has 'booking' reference. Booking model doesn't have 'bill' reference.
-        // We can fetch bookings and then find bills for them, or just fetch bookings.
-        // The view likely expects `booking.Bill`. We can attach it.
         
         const allBookings = await Booking.find({
             listing: { $in: listingIds }

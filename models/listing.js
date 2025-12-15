@@ -41,9 +41,51 @@ const listingSchema = new Schema({
       required: true,
     },
   },
-  category: {
+  status: {
     type: String,
-    enum: ["mountains", "arctic", "farms", "deserts"],
+    enum: ["pending", "approved", "rejected"],
+    default: "pending",
+  },
+  capacity: {
+    type: Number,
+    required: true,
+    default: 1,
+  },
+  festivalName: {
+    type: String,
+    required: false,
+  },
+  nearestLocation1: {
+    type: String,
+    required: false,
+  },
+  distance1: {
+    type: Number,
+    required: false,
+  },
+  nearestLocation2: {
+    type: String,
+    required: false,
+  },
+  distance2: {
+    type: Number,
+    required: false,
+  },
+  nearestLocation3: {
+    type: String,
+    required: false,
+  },
+  distance3: {
+    type: Number,
+    required: false,
+  },
+  nearestLocation4: {
+    type: String,
+    required: false,
+  },
+  distance4: {
+    type: Number,
+    required: false,
   },
 });
 
