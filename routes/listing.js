@@ -13,13 +13,13 @@ router
     .route("/")
     .get(wrapAsync(listingController.index))
     .post(
-        isLoggedIn, 
+        isLoggedIn,
         isOwner,
         upload.single('listing[image]'),
-        validateListing, 
+        validateListing,
         wrapAsync(listingController.createListing)
     );
-    
+
 // Route to show the "new listing" form
 router.get("/new", isLoggedIn, isOwner, listingController.renderNewForm);
 
@@ -38,10 +38,10 @@ router
     .route("/:id")
     .get(wrapAsync(listingController.showListing))
     .put(
-        isLoggedIn, 
-        isOwner, 
+        isLoggedIn,
+        isOwner,
         upload.single('listing[image]'),
-        validateListing, 
+        validateListing,
         wrapAsync(listingController.updateListing)
     )
     .delete(isLoggedIn, isOwner, wrapAsync(listingController.destroyListing));
@@ -51,6 +51,11 @@ router.patch("/:id/status", isLoggedIn, isAdmin, wrapAsync(listingController.upd
 
 // Route to show the "edit listing" form
 router.get("/:id/edit", isLoggedIn, isOwner, wrapAsync(listingController.renderEditForm));
+
+// Export Routes
+router.get("/admin/export/listings", isLoggedIn, isAdmin, wrapAsync(listingController.exportListings));
+router.get("/admin/export/bookings", isLoggedIn, isAdmin, wrapAsync(listingController.exportBookings));
+router.get("/admin/export/users", isLoggedIn, isAdmin, wrapAsync(listingController.exportUsers));
 
 module.exports = router;
 
